@@ -1,2 +1,3 @@
 # X-Ray-Diffraction (xrd)
-Files for daily analysis of X-Ray data
+#Description
+Helper code to speed up X-Ray diffraction analysis and obtain information regularly required. 
