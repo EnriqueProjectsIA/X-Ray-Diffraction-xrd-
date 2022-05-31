@@ -36,7 +36,8 @@ class XRAY():
         '''
         Modifies self.interval
         Allows to calculates fits in difractogram with multiple peaks.
-        every pair in the main list indicates 2Theta interval peak position
+        Listoflist needs to contain pairs of 2Theta angles, the pairs of points indicate intervals of peaks positions
+        
         Parameters
         ----------
         listOfLists: list of lists like [[38,41],[42,52]]
