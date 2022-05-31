@@ -245,4 +245,4 @@ class XRAY():
         return (allDataSelectedWithoutPeaks,noiseFitting,dataWithNoNoise)
 
 if __name__ == "__main__":
-    print('ok')
+    print('_ok_')
