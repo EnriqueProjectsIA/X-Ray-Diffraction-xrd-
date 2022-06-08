@@ -32,7 +32,7 @@ class XRAY():
             raise NameError('No valid data structure')
         self.interval = []
     
-    def intervals(self,listOfLists):
+    def intervals(self,listOfLists:list)->list:
         '''
         Modifies self.interval
         Allows to calculates fits in difractogram with multiple peaks.
@@ -49,7 +49,7 @@ class XRAY():
             listOfIndexIntervals.append((indexPos1,indexPos2))
         self.interval = listOfIndexIntervals
 
-    def __private1Gaussian(self,x, H, A, x0, sigma):
+    def __private1Gaussian(self,x:float, H:float, A:float, x0:float, sigma:float)->float:
         '''
         Calculates the gauss function in a gived point
 
