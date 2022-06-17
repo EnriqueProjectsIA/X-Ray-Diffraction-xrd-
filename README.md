@@ -2,7 +2,12 @@
 
 ## Description
 
-Helper code to speed up X-Ray diffraction analysis and obtain information regularly required. 
+Files are used to manage data from different sources.
+
+## Files
+
+* XRD.py - Class and methods used to manipulate data from X-Ray diffractometers and calculate different magnitudes. 
+* PrepareDataToPush – Class to give consistent struct and types to the data before pushing the data to a mongoDb
 
 ## Usage
 
