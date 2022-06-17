@@ -38,16 +38,16 @@ class AnnealingProfile(BaseModel):
     time:           Optional[PairValueUnit]
 
 class Annealing(BaseModel):
-    type: Optional[str] = 'NA'
-    ramp: Optional[str] = 'NA'
-    profile: Optional[List[AnnealingProfile]]
+    type:       Optional[str] = 'NA'
+    ramp:       Optional[str] = 'NA'
+    profile:    Optional[List[AnnealingProfile]]
 
 
 class FabricationPresure(BaseModel):
     atmosphere: Optional[str] = 'ar'
-    type: Optional[str] = "pressure"
-    quantity: Optional[float] = None
-    units: Optional[str] = None
+    type:       Optional[str] = "pressure"
+    quantity:   Optional[float] = None
+    units:      Optional[str] = None
 
     @root_validator()
     @classmethod
