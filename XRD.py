@@ -49,7 +49,7 @@ class XRAY():
             listOfIndexIntervals.append((indexPos1,indexPos2))
         self.interval = listOfIndexIntervals
 
-    def __private1Gaussian(self,x, H, A, x0, sigma):
+    def __private1Gaussian(self,x:float, H:float, A:float, x0:float, sigma:float)->float:
         '''
         Calculates the gauss function in a gived point
 
@@ -127,11 +127,11 @@ class XRAY():
         EH, EA, E2Theta, ES = np.sqrt(np.abs(pcov.diagonal()))#Desviaciiones Standart
         
         dictfit = {
-            'baseLevel':[H,EH],
-            'amplitude':[A,EA],
-            'center':[x0,E2Theta],
+            'baseLevel':[H,np.sqrt((EH**2)+(1**2))],
+            'amplitude':[A,np.sqrt((EA**2)+(1**2))],
+            'center':[x0,np.sqrt((E2Theta**2)+(0.02**2))],
             'FWHM':[round(2.355*abs(sigma),4),round(2.355*ES,4)],
-            'integratedIntensity':np.trapz(y,x)
+            'integratedIntensity':[np.trapz(y,x)]
         }
         return (popt,pcov,dictfit)
     
