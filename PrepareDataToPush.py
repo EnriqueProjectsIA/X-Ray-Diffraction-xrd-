@@ -58,7 +58,7 @@ class FabricationPresure(BaseModel):
             raise UnitMissingError(values = values, message="A measure has to have units")
         return values
 
-class DepositionRate(BaseModel):
+class Substrate(BaseModel):
     type:           str
     orientation:    str
 
@@ -76,7 +76,7 @@ class Fabrication(BaseModel):
     basePresure:            Optional[PairValueUnit]
     fabricationPresure:     Optional[FabricationPresure]
     fabricationPower:       Optional[PairValueUnit]
-    substrate:              Optional[DepositionRate]
+    substrate:              Optional[Substrate]
     depositionRate:         Optional[PairValueUnit]
     expectedThickness:      Optional[PairValueUnit]
     place:                  str
