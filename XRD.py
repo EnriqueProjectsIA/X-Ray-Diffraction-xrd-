@@ -32,7 +32,7 @@ class XRAY():
             raise NameError('No valid data structure')
         self.interval = []
     
-    def intervals(self,listOfLists):
+    def intervals(self,listOfLists:list)->list:
         '''
         Modifies self.interval
         Allows to calculates fits in difractogram with multiple peaks.
