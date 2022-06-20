@@ -1,7 +1,11 @@
 import numpy as np
 from datetime import date, datetime, time, timedelta
-from pydantic import BaseModel, validator, root_validator
+from pydantic import BaseModel, validator, root_validator, constr
 from typing import Optional, List, Dict
+import re
+
+
+
 
 class NameError(Exception):
     '''Exception raised when validation string is invalid'''
@@ -18,6 +22,31 @@ class UnitMissingError(Exception):
         self.values = values
         self.message = message
         super().__init__(message)
+
+class DlimiterNumberError(Exception):
+    '''Exception raised when incorrect number of delimiter'''
+
+    def __init__(self, value:int, message:str) ->None:
+        self.value = value
+        self.message = message
+        super().__init__(message)
+class WrongDateFormat(Exception):
+    '''Exception raised when incorrect number of delimiter'''
+
+    def __init__(self, value:int, message:str) ->None:
+        self.value = value
+        self.message = message
+        super().__init__(message)
+
+class MissingDataError(Exception):
+    '''Exception raised when the X data and Y data dimensions are different'''
+
+    def __init__(self, values:dict, message:str) ->None:
+        self.values = values
+        self.message = message
+        super().__init__(message)
+
+
 
 class PairValueUnit(BaseModel):
     quantity:   Optional[float] = None
@@ -62,6 +91,19 @@ class Substrate(BaseModel):
     type:           str
     orientation:    str
 
+class degreeIntensity(BaseModel):
+    degrees: List[float]
+    intensity: List[int]
+    @root_validator()
+    @classmethod
+    def checkForUnits(cls, values:Dict) -> Dict:
+        listToCheck1 = values.get('degrees')
+        listToCheck2 = values.get('intensity')
+        if len(listToCheck1)!=len(listToCheck2):
+            raise MissingDataError(values = values, message="X data dimensions doesn’t match with Y data dimensions")
+        return values
+
+
 class Fabrication(BaseModel):
     '''class to detail the fabrication steps for each layer of the thin film sample'''
     class Config:
@@ -80,9 +122,59 @@ class Fabrication(BaseModel):
     depositionRate:         Optional[PairValueUnit]
     expectedThickness:      Optional[PairValueUnit]
     place:                  str
-    fabricationDate:        date
+    fabricationDate:        datetime
+
+    @validator('fabricationDate', pre = True)
+    @classmethod
+    def dateFormated(cls,value:str)->datetime:
+        delimiter = re.findall(r'\D', value)
+        vd = delimiter[0]
+        if len(delimiter)!=2:
+            raise DlimiterNumberError(value, 'Error in date delimiter')
+        else:
+            dateFormat=f'%Y{vd}%m{vd}%d'
+        if int(value.split(vd)[0])<2000:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if int(value.split(vd)[1])>12:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if len(delimiter)==2:
+            if delimiter[0]!=delimiter[1]:
+                raise DlimiterNumberError(value, 'Error in date delimiter')
+        value = datetime.combine(datetime.strptime(value, dateFormat),datetime.min.time())
+        return value
 
 
+class measurementsXRAY(BaseModel):
+    '''class to detail the XRAY measurements of a thin film sample'''
+
+    nameInBox:  str
+    type:       str = 'theta-2theta'
+    mode:       str = ''
+    fileName:   List[str]
+    location:   str
+    date:       datetime
+    Step_size:  float = 0.02
+    Step_Time:  float = 1
+    measures:   degreeIntensity
+
+    @validator('date', pre = True)
+    @classmethod
+    def dateFormated(cls,value:str)->datetime:
+        delimiter = re.findall(r'\D', value)
+        vd = delimiter[0]
+        if len(delimiter)!=2:
+            raise DlimiterNumberError(value, 'Error in date delimiter')
+        else:
+            dateFormat=f'%Y{vd}%m{vd}%d'
+        if int(value.split(vd)[0])<2000:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if int(value.split(vd)[1])>12:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if len(delimiter)==2:
+            if delimiter[0]!=delimiter[1]:
+                raise DlimiterNumberError(value, 'Error in date delimiter')
+        value = datetime.combine(datetime.strptime(value, dateFormat),datetime.min.time())
+        return value
 
 
 
@@ -108,8 +200,6 @@ class Sample(BaseModel):
 
 
 
-
-
 if __name__ == '__main__':
     #Example of use
     print(Sample(sampleName='Test',
@@ -120,7 +210,8 @@ if __name__ == '__main__':
             depositionRate = {'quantity':11.2, 'units':'nm/min'},
             expectedThickness = {'quantity':50,'units':'nm'},
             place = 'IMB',
-            fabricationDate =  "2024-4-25"
+            fabricationDate =  "2023 7 06"
         )]
         ).dict())
+
     print('ok')
