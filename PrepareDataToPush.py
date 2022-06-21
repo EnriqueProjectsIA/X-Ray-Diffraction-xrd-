@@ -198,6 +198,32 @@ class Sample(BaseModel):
             raise NameError(value=value, message="A sample has to have a name and no blank spaces are allowed")
         return value
 
+class SendSample(BaseModel):
+    sampleName:         str
+    fabricationMethod:  str
+    substrate:          str
+    origin:             str
+    destination:        str
+    sendDate:           datetime
+    more:               Optional[List]
+    @validator('sendDate', pre = True)
+    @classmethod
+    def dateFormated(cls,value:str)->datetime:
+        delimiter = re.findall(r'\D', value)
+        vd = delimiter[0]
+        if len(delimiter)!=2:
+            raise DlimiterNumberError(value, 'Error in date delimiter')
+        else:
+            dateFormat=f'%Y{vd}%m{vd}%d'
+        if int(value.split(vd)[0])<2000:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if int(value.split(vd)[1])>12:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if len(delimiter)==2:
+            if delimiter[0]!=delimiter[1]:
+                raise DlimiterNumberError(value, 'Error in date delimiter')
+        value = datetime.combine(datetime.strptime(value, dateFormat),datetime.min.time())
+        return value
 
 
 if __name__ == '__main__':
