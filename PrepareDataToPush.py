@@ -61,6 +61,19 @@ class PairValueUnit(BaseModel):
             raise UnitMissingError(values = values, message="A measure has to have units")
         return values
 
+class PairListValueUnit(BaseModel):
+    quantity:   Optional[List[float]] = []
+    units:      Optional[str] = None
+
+    @root_validator(pre = True)
+    @classmethod
+    def checkForUnits(cls, values:Dict)->Dict:
+        valueToCheck = values.get('quantity')
+        unitToCheck = values.get('units')
+        if valueToCheck!=[] and unitToCheck==None:
+            raise UnitMissingError(values = values, message="A measure has to have units")
+        return values
+
 class AnnealingProfile(BaseModel):
     steps:          Optional[int] = None
     temperature:    Optional[PairValueUnit]
@@ -103,6 +116,10 @@ class degreeIntensity(BaseModel):
             raise MissingDataError(values = values, message="X data dimensions doesn’t match with Y data dimensions")
         return values
 
+class TransportXY(BaseModel):
+    X: Optional[PairListValueUnit]=[]
+    Y: Optional[PairListValueUnit]=[]
+
 
 class Fabrication(BaseModel):
     '''class to detail the fabrication steps for each layer of the thin film sample'''
@@ -144,12 +161,13 @@ class Fabrication(BaseModel):
         return value
 
 
-class measurementsXRAY(BaseModel):
+class MeasurementsXRAY(BaseModel):
     '''class to detail the XRAY measurements of a thin film sample'''
 
     nameInBox:  str
     type:       str = 'theta-2theta'
     mode:       str = ''
+    machine:    str = 'SIEMENS'
     fileName:   List[str]
     location:   str
     date:       datetime
@@ -177,6 +195,57 @@ class measurementsXRAY(BaseModel):
         return value
 
 
+class MeasurementsTransportM(BaseModel):
+    '''class to detail the XRAY measurements of a thin film sample'''
+
+    nameInBox:      str
+    type:           str = 'transport'
+    mode:           str = '4-points'
+    machine:        str = 'dilution cryostat'
+    fileName:       str
+    location:       str
+    measurementDay: datetime
+    measures:       Optional[TransportXY]
+    place:          str
+
+    @validator('measurementDay', pre = True)
+    @classmethod
+    def dateFormated(cls,value:str)->datetime:
+        delimiter = re.findall(r'\D', value)
+        vd = delimiter[0]
+        if len(delimiter)!=2:
+            raise DlimiterNumberError(value, 'Error in date delimiter')
+        else:
+            dateFormat=f'%Y{vd}%m{vd}%d'
+        if int(value.split(vd)[0])<2000:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if int(value.split(vd)[1])>12:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if len(delimiter)==2:
+            if delimiter[0]!=delimiter[1]:
+                raise DlimiterNumberError(value, 'Error in date delimiter')
+        value = datetime.combine(datetime.strptime(value, dateFormat),datetime.min.time())
+        return value
+
+class CalculatedDataTransport(BaseModel):
+    '''
+    Class to add data extracted from transpor measurements
+    '''
+    calculatedFrom: str
+    nameInBox: str
+    R300K:  Optional[PairValueUnit]
+    RN:     Optional[PairValueUnit]
+    RRR:    Optional[PairValueUnit]
+    TC:     Optional[PairValueUnit]
+
+
+class CalculatedData(BaseModel):
+    '''
+    Base class to add data calculated from different sources
+    '''
+    transport: Optional[List[CalculatedDataTransport]]
+    xrd:       Optional[List]
+    sem:       Optional[List]
 
 class Sample(BaseModel):
     '''
@@ -199,6 +268,9 @@ class Sample(BaseModel):
         return value
 
 class SendSample(BaseModel):
+    '''
+    Base classs to keep track of the sample location
+    '''
     sampleName:         str
     fabricationMethod:  str
     substrate:          str
