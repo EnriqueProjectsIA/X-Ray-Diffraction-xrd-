@@ -5,7 +5,9 @@ from typing import Optional, List, Dict
 import re
 
 
-
+########################################################################
+## Errors
+########################################################################
 
 class NameError(Exception):
     '''Exception raised when validation string is invalid'''
@@ -46,7 +48,9 @@ class MissingDataError(Exception):
         self.message = message
         super().__init__(message)
 
-
+################################################################
+## classes for multiple uses
+################################################################
 
 class PairValueUnit(BaseModel):
     quantity:   Optional[float] = None
@@ -120,6 +124,113 @@ class TransportXY(BaseModel):
     X: Optional[PairListValueUnit]=[]
     Y: Optional[PairListValueUnit]=[]
 
+################################################################
+## Data structures for different measurements
+################################################################
+class MeasurementsXRAY(BaseModel):
+    '''class to detail the XRAY measurements of a thin film sample'''
+
+    nameInBox:  str
+    type:       str = 'theta-2theta'
+    mode:       str = ''
+    machine:    str = 'SIEMENS'
+    fileName:   List[str]
+    location:   str
+    date:       datetime
+    Step_size:  float = 0.02
+    Step_Time:  float = 1
+    measures:   degreeIntensity
+
+    @validator('date', pre = True)
+    @classmethod
+    def dateFormated(cls,value:str)->datetime:
+        delimiter = re.findall(r'\D', value)
+        vd = delimiter[0]
+        if len(delimiter)!=2:
+            raise DlimiterNumberError(value, 'Error in date delimiter')
+        else:
+            dateFormat=f'%Y{vd}%m{vd}%d'
+        if int(value.split(vd)[0])<2000:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if int(value.split(vd)[1])>12:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if len(delimiter)==2:
+            if delimiter[0]!=delimiter[1]:
+                raise DlimiterNumberError(value, 'Error in date delimiter')
+        value = datetime.combine(datetime.strptime(value, dateFormat),datetime.min.time())
+        return value
+
+class MeasurementsTransportM(BaseModel):
+    '''class to detail the XRAY measurements of a thin film sample'''
+
+    nameInBox:      str
+    type:           str = 'transport'
+    mode:           str = '4-points'
+    machine:        str = 'dilution cryostat'
+    fileName:       str
+    location:       str
+    measurementDay: datetime
+    measures:       Optional[TransportXY]
+    place:          str
+
+    @validator('measurementDay', pre = True)
+    @classmethod
+    def dateFormated(cls,value:str)->datetime:
+        delimiter = re.findall(r'\D', value)
+        vd = delimiter[0]
+        if len(delimiter)!=2:
+            raise DlimiterNumberError(value, 'Error in date delimiter')
+        else:
+            dateFormat=f'%Y{vd}%m{vd}%d'
+        if int(value.split(vd)[0])<2000:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if int(value.split(vd)[1])>12:
+            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
+        if len(delimiter)==2:
+            if delimiter[0]!=delimiter[1]:
+                raise DlimiterNumberError(value, 'Error in date delimiter')
+        value = datetime.combine(datetime.strptime(value, dateFormat),datetime.min.time())
+        return value
+
+################################################################
+## Data structures for calculated data from different sources
+################################################################
+class CalculatedDataTransport(BaseModel):
+    '''
+    Class to add data extracted from transpor measurements
+    '''
+    calculatedFrom: str
+    nameInBox: str
+    R300K:  Optional[PairValueUnit]
+    R4K:    Optional[PairValueUnit]
+    RN:     Optional[PairValueUnit]
+    RRR:    Optional[PairValueUnit]
+    TC:     Optional[PairValueUnit]
+
+
+################################################################
+## classes for data structures in files to be pushed
+################################################################
+class Sample(BaseModel):
+    '''
+    Base classs to create sample before pushing the data to a MongoDB.
+    It contains the general data structure
+    '''
+    
+    sampleName:     str
+    tags:           Optional[List[str]]
+    fabrication:    Optional[List]#Each sample layer is an element in the list
+    measurements:   Optional[List]
+    calculatedData: Optional[List]
+    comments:       Optional[List]
+
+
+    @validator('sampleName')
+    @classmethod
+    def validate_SampleName(cls, value):
+        if ' ' in value or value=='':
+            raise NameError(value=value, message="A sample has to have a name and no blank spaces are allowed")
+        return value
 
 class Fabrication(BaseModel):
     '''class to detail the fabrication steps for each layer of the thin film sample'''
@@ -161,83 +272,6 @@ class Fabrication(BaseModel):
         return value
 
 
-class MeasurementsXRAY(BaseModel):
-    '''class to detail the XRAY measurements of a thin film sample'''
-
-    nameInBox:  str
-    type:       str = 'theta-2theta'
-    mode:       str = ''
-    machine:    str = 'SIEMENS'
-    fileName:   List[str]
-    location:   str
-    date:       datetime
-    Step_size:  float = 0.02
-    Step_Time:  float = 1
-    measures:   degreeIntensity
-
-    @validator('date', pre = True)
-    @classmethod
-    def dateFormated(cls,value:str)->datetime:
-        delimiter = re.findall(r'\D', value)
-        vd = delimiter[0]
-        if len(delimiter)!=2:
-            raise DlimiterNumberError(value, 'Error in date delimiter')
-        else:
-            dateFormat=f'%Y{vd}%m{vd}%d'
-        if int(value.split(vd)[0])<2000:
-            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
-        if int(value.split(vd)[1])>12:
-            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
-        if len(delimiter)==2:
-            if delimiter[0]!=delimiter[1]:
-                raise DlimiterNumberError(value, 'Error in date delimiter')
-        value = datetime.combine(datetime.strptime(value, dateFormat),datetime.min.time())
-        return value
-
-
-class MeasurementsTransportM(BaseModel):
-    '''class to detail the XRAY measurements of a thin film sample'''
-
-    nameInBox:      str
-    type:           str = 'transport'
-    mode:           str = '4-points'
-    machine:        str = 'dilution cryostat'
-    fileName:       str
-    location:       str
-    measurementDay: datetime
-    measures:       Optional[TransportXY]
-    place:          str
-
-    @validator('measurementDay', pre = True)
-    @classmethod
-    def dateFormated(cls,value:str)->datetime:
-        delimiter = re.findall(r'\D', value)
-        vd = delimiter[0]
-        if len(delimiter)!=2:
-            raise DlimiterNumberError(value, 'Error in date delimiter')
-        else:
-            dateFormat=f'%Y{vd}%m{vd}%d'
-        if int(value.split(vd)[0])<2000:
-            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
-        if int(value.split(vd)[1])>12:
-            raise WrongDateFormat(value,'Appropiate date format YYYY-MM-DD')
-        if len(delimiter)==2:
-            if delimiter[0]!=delimiter[1]:
-                raise DlimiterNumberError(value, 'Error in date delimiter')
-        value = datetime.combine(datetime.strptime(value, dateFormat),datetime.min.time())
-        return value
-
-class CalculatedDataTransport(BaseModel):
-    '''
-    Class to add data extracted from transpor measurements
-    '''
-    calculatedFrom: str
-    nameInBox: str
-    R300K:  Optional[PairValueUnit]
-    RN:     Optional[PairValueUnit]
-    RRR:    Optional[PairValueUnit]
-    TC:     Optional[PairValueUnit]
-
 
 class CalculatedData(BaseModel):
     '''
@@ -247,25 +281,14 @@ class CalculatedData(BaseModel):
     xrd:       Optional[List]
     sem:       Optional[List]
 
-class Sample(BaseModel):
-    '''
-    Base classs to create sample before pushing the data to a MongoDB
-    '''
-    
-    sampleName:     str
-    tags:           Optional[List[str]]
-    fabrication:    Optional[List]#Each sample layer is an element in the list
-    measurements:   Optional[List]
-    calculatedData: Optional[List]
-    comments:       Optional[List]
 
 
-    @validator('sampleName')
-    @classmethod
-    def validate_SampleName(cls, value):
-        if ' ' in value or value=='':
-            raise NameError(value=value, message="A sample has to have a name and no blank spaces are allowed")
-        return value
+################################################################
+## classes for keepin track of sample location.
+## In collection: sendSample
+################################################################
+
+
 
 class SendSample(BaseModel):
     '''
