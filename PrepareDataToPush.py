@@ -131,8 +131,8 @@ class MeasurementsXRAY(BaseModel):
     '''class to detail the XRAY measurements of a thin film sample'''
 
     nameInBox:  str
-    type:       str = 'theta-2theta'
-    mode:       str = ''
+    type:       str = 'xrd'
+    mode:       str = 'theta-2theta'
     machine:    str = 'SIEMENS'
     fileName:   List[str]
     location:   str
@@ -172,6 +172,7 @@ class MeasurementsTransportM(BaseModel):
     measurementDay: datetime
     measures:       Optional[TransportXY]
     place:          str
+    comments:       List[str]
 
     @validator('measurementDay', pre = True)
     @classmethod
@@ -203,9 +204,11 @@ class CalculatedDataTransport(BaseModel):
     nameInBox: str
     R300K:  Optional[PairValueUnit]
     R4K:    Optional[PairValueUnit]
+    R50mK:  Optional[PairValueUnit]
     RN:     Optional[PairValueUnit]
     RRR:    Optional[PairValueUnit]
     TC:     Optional[PairValueUnit]
+    comments: Optional[List[str]]
 
 
 ################################################################
