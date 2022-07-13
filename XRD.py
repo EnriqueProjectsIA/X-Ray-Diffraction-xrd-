@@ -62,6 +62,23 @@ class XRAY():
         sigma : numeric, standar desviation
         '''
         return H + A * np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))
+
+    def __private2Gaussian(self,x:float, H:float, A:float,B:float,
+                            x0:float,X0_2:float, sigma:float, sigma_2:float)->float:
+        '''
+        Calculates the gauss function in a gived point
+
+        Parameters
+        ----------
+        x : numeric, poinnt to be calculated
+        H : numeric, base level
+        A : numeric, Amplitude
+        x0 : numeric, center position 
+        sigma : numeric, standar desviation
+        '''
+        return H + A * np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))\
+            + B * np.exp(-(x - X0_2) ** 2 / (2 * sigma_2 ** 2))
+
     
     def __privateexp(x, A, K, C):
         '''
@@ -132,6 +149,61 @@ class XRAY():
             'center':[x0,np.sqrt((E2Theta**2)+(0.02**2))],
             'FWHM':[round(2.355*abs(sigma),4),round(2.355*ES,4)],
             'integratedIntensity':[np.trapz(y,x)]
+        }
+        return (popt,pcov,dictfit)
+    def gauss2_fit(self,peakIndexNumber,max1 =None,max2=None,cent1=None,cent2=None,
+                    sigma1 = None, sigma2 = None):
+        '''
+        Fits X, Y data to a double gaussian function and returns popt and pcov.
+        popt contains the parameters fitted H, A, x0 and sigma.
+        pcov is the covariance matrix from the gaussian fit
+
+        Parameters
+        ----------
+        peakIndexNumber: Integer, index of the peak in difractogram to fit. It needs method intervals
+        '''
+        pos1 = self.interval[peakIndexNumber][0]
+        pos2 = self.interval[peakIndexNumber][1]
+        x = self.X[pos1:pos2]
+        y = self.Y[pos1:pos2]
+        if max1==None and max2==None:
+            max1 = max(y)
+            max2 = max(y)
+        else:
+            max1 = max1
+            max2 = max2
+        if cent1==None and cent2==None:
+            mean = sum(x * y) / sum(y)
+            cent1 = mean
+            cent2 = mean
+        else:
+            cent1 = cent1
+            cent2 = cent2
+        if sigma1==None and sigma2==None:
+            sigma = np.sqrt(sum(y * (x - mean) ** 2) / sum(y))
+            sigma1 = sigma
+            sigma2 = sigma
+        else:
+            sigma1 = sigma1
+            sigma2 = sigma2
+        
+        
+        popt, pcov = curve_fit(self.__private2Gaussian, x, y, p0=[min(y), max1,max2,
+                                cent1,cent2, sigma1,sigma2])
+        H, A,B, X0,X02, sigma1,sigma2 = popt
+        EH, EA,EB, E2Theta1,E2Theta2, ES1,ES2 = np.sqrt(np.abs(pcov.diagonal()))#Desviaciiones Standart
+        
+        dictfit = {
+            'baseLevel':[H,np.sqrt((EH**2)+(1**2))],
+            'amplitude1':[A,np.sqrt((EA**2)+(1**2))],
+            'amplitude2':[B,np.sqrt((EB**2)+(1**2))],
+            'center1':[X0,np.sqrt((E2Theta1**2)+(0.02**2))],
+            'center2':[X02,np.sqrt((E2Theta2**2)+(0.02**2))],
+            'FWHM1':[round(2.355*abs(sigma1),4),round(2.355*ES1,4)],
+            'FWHM2':[round(2.355*abs(sigma2),4),round(2.355*ES2,4)],
+            'Y1' : self.__private1Gaussian(x,H,A,X0,sigma1),
+            'Y2' : self.__private1Gaussian(x,H,B,X02,sigma2),
+
         }
         return (popt,pcov,dictfit)
     
