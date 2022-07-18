@@ -124,6 +124,11 @@ class TransportXY(BaseModel):
     X: Optional[PairListValueUnit]=[]
     Y: Optional[PairListValueUnit]=[]
 
+class ComTransport(BaseModel):
+    tc: str = None
+    type: str = None
+    comment: Optional[List[str]] = None
+
 ################################################################
 ## Data structures for different measurements
 ################################################################
@@ -208,6 +213,7 @@ class CalculatedDataTransport(BaseModel):
     RN:     Optional[PairValueUnit]
     RRR:    Optional[PairValueUnit]
     TC:     Optional[PairValueUnit]
+    description:     Optional[ComTransport]
     comments: Optional[List[str]]
 
 
